@@ -1,0 +1,52 @@
+# 3 Amazon POC use cases - written in plain English.
+# The planner LLM turns each into an executable Playwright action plan;
+# the validator LLM judges the captured data against the validations.
+
+- name: UC1_Product_Search_Relevance
+  objective: Verify that searching for a product on Amazon.in returns relevant results
+  steps:
+    - Open https://www.amazon.in
+    - Type "wireless mouse" in the search box and press Enter
+    - Wait for the search results to load
+    - Extract the titles of the visible search results (save as result_titles)
+    - Extract the prices of the visible search results (save as result_prices)
+    - Take a screenshot named uc1_search_results
+  capture: result_titles (list), result_prices (list)
+  validations:
+    - At least 5 search results were returned
+    - At least 70% of the result titles are semantically relevant to "wireless mouse" (a mouse pad or a wired mouse counts as NOT relevant)
+    - Every captured price is a valid rupee amount greater than zero
+
+- name: UC2_Sort_By_Price_Low_To_High
+  objective: Verify that sorting search results by "Price - Low to High" actually orders prices ascending
+  steps:
+    - Open https://www.amazon.in
+    - Search for "usb keyboard" and press Enter
+    - Wait for results to load
+    - Select the sort option "price-asc-rank" from the sort dropdown
+    - Wait for the re-sorted results to load
+    - Extract the prices of the first visible results (save as sorted_prices)
+    - Take a screenshot named uc2_sorted_results
+  capture: sorted_prices (list)
+  validations:
+    - At least 5 prices were captured
+    - The captured prices are in non-decreasing (ascending) order when parsed numerically, ignoring sponsored outliers in the first 2 positions if they break the order
+    - All prices are plausible for a USB keyboard (between ₹100 and ₹20,000)
+
+- name: UC3_Add_To_Cart
+  objective: Verify a product can be added to the cart and the cart count increments
+  steps:
+    - Open https://www.amazon.in
+    - Extract the current cart count badge (save as cart_before)
+    - Search for "kindle paperwhite" and press Enter
+    - Wait for results and click the first organic result title link
+    - Wait for the product page to load (add-to-cart button visible)
+    - Extract the product title on the product page (save as product_title)
+    - Click the Add to Cart button
+    - Wait 4 seconds for the cart to update
+    - Extract the cart count badge (save as cart_after)
+    - Take a screenshot named uc3_cart
+  capture: cart_before, product_title, cart_after
+  validations:
+    - product_title is a Kindle-related product
+    - cart_after is numerically greater than cart_before

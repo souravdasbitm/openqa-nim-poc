@@ -1,0 +1,73 @@
+name: OpenQA POC - AI-Driven Amazon Tests
+
+on:
+  workflow_dispatch:            # manual "Run workflow" button with inputs
+    inputs:
+      use_case:
+        description: "Use case to run (UC1 / UC2 / UC3 / all)"
+        required: false
+        default: "all"
+  schedule:
+    - cron: "30 3 * * 1-5"      # 09:00 IST, weekdays - nightly-style regression
+  # NOTE: deliberately NOT on push/PR - free-tier LLM quota + Amazon scraping
+  # on every commit is wasteful and rude. Trigger manually or on schedule.
+
+jobs:
+  openqa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NIM_MODEL: deepseek-ai/deepseek-v4-pro-0813
+      NIM_BASE_URL: https://integrate.api.nvidia.com/v1
+      HEADLESS: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Run POC
+        id: run
+        continue-on-error: true          # Amazon CAPTCHA in CI is a known risk;
+        run: |                           # we still want the report artifact
+          if [ "${{ github.event.inputs.use_case || 'all' }}" = "all" ]; then
+            python run_poc.py
+          else
+            python run_poc.py --only "${{ github.event.inputs.use_case }}"
+          fi
+
+      - name: Upload reports (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openqa-report-${{ github.run_number }}
+          path: |
+            reports/report.md
+            reports/results.json
+            reports/*.png
+            reports/*_plan.json
+          retention-days: 14
+
+      - name: Publish summary to run page
+        if: always()
+        run: |
+          if [ -f reports/report.md ]; then
+            cat reports/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No report generated - execution failed before reporting." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Fail job if tests failed
+        if: steps.run.outcome == 'failure'
+        run: exit 1
