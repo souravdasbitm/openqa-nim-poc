@@ -107,8 +107,8 @@ Workflow at `.github/workflows/openqa-poc.yml`:
 
 | Purpose | Model | Why |
 |---|---|---|
-| Default all-rounder | `deepseek-ai/deepseek-v4-pro-0813` | strong structured JSON; Llama 3.3 70B is EOL |
-| Faster / cheaper | `deepseek-ai/deepseek-v4-flash-0731` | quicker planning; may be weaker on healing |
-| Vision-capable alt | `meta/llama-3.2-11b-vision-instruct` | if you need multimodal later |
+| Default (fast) | `meta/llama-3.2-11b-vision-instruct` | quick planning; free-tier friendly |
+| Stronger reasoning | `nvidia/nemotron-3-nano-30b-a3b` | better structured output when Flash is enough |
+| Heavy / slow | `deepseek-ai/deepseek-v4-pro-0813` | strong quality but can take 1–2+ min per call |
 
 Confirm IDs on [build.nvidia.com](https://build.nvidia.com) — catalog churn is common; a listed model can still 404 until enabled for your key.

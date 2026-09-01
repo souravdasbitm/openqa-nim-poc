@@ -13,14 +13,19 @@ from openai import OpenAI
 
 NIM_BASE_URL = os.getenv("NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")
 NIM_API_KEY = os.getenv("NVIDIA_API_KEY", "")
-NIM_MODEL = os.getenv("NIM_MODEL", "deepseek-ai/deepseek-v4-pro-0813")
+NIM_MODEL = os.getenv("NIM_MODEL", "meta/llama-3.2-11b-vision-instruct")
 
 
 class NimClient:
     def __init__(self, model: str = NIM_MODEL, temperature: float = 0.1):
         if not NIM_API_KEY and "nvidia" in NIM_BASE_URL:
             raise RuntimeError("Set NVIDIA_API_KEY env var (get one free at build.nvidia.com)")
-        self.client = OpenAI(base_url=NIM_BASE_URL, api_key=NIM_API_KEY or "ollama")
+        # timeout avoids indefinite hangs on slow/overloaded hosted models
+        self.client = OpenAI(
+            base_url=NIM_BASE_URL,
+            api_key=NIM_API_KEY or "ollama",
+            timeout=90.0,
+        )
         self.model = model
         self.temperature = temperature
 
