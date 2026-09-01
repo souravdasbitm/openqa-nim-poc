@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 25
     env:
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-      NIM_MODEL: deepseek-ai/deepseek-v4-pro-0813
+      NIM_MODEL: meta/llama-3.2-11b-vision-instruct
       NIM_BASE_URL: https://integrate.api.nvidia.com/v1
       HEADLESS: "true"
 
